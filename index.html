@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ANU'SAMO WRAPPED</title>
+    
+    <!-- Google Sans Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- App Logic defined BEFORE Alpine loads -->
+    <script>
+        function wrappedApp() {
+            return {
+                view: 'waiting', // waiting, transition, stories, summary
+                targetDate: new Date('2026-01-01T00:01:00').getTime(),
+                now: new Date().getTime(),
+                timeLeft: { hours: '00', minutes: '00', seconds: '00' },
+                timerInterval: null,
+                
+                // --- Audio System ---
+                currentAudio: new Audio(),
+                isMuted: false,
+
+                // --- 1. CONFIG: WAITING SCREEN IMAGES ---
+                // ใส่ชื่อไฟล์รูปภาพที่มีอยู่ในโฟลเดอร์ 'pictures'
+                waitingImages: [
+                    'IMG_0021.jpg',
+                    'IMG_0111.jpg',
+                    'IMG_0181.jpg',
+                    'IMG_0215.jpg',
+                    'IMG_0217.jpg',
+                    'IMG_0221.jpg',
+                    'IMG_0237.JPG',
+                    'IMG_0327.jpg',
+                    'IMG_0385.jpg',
+                    'IMG_0439.jpg',
+                    'IMG_0440.JPG',
+                    'IMG_0505.jpg',
+                    'IMG_0509.jpg',
+                    'IMG_0511.jpg',
+                    'IMG_0518.jpg',
+                    'IMG_0520.JPG',
+                    'IMG_0525.jpg',
+                    'IMG_0526.jpg',
+                    'IMG_0538.jpg',
+                    'IMG_0597.jpg',
+                    'IMG_0612.jpg',
+                    'IMG_0615.jpg',
+                    'IMG_0616.jpg',
+                    'IMG_0617.jpg',
+                    'IMG_0640.jpg',
+                    'IMG_0642.jpg',
+                    'IMG_0645.jpg',
+                    'IMG_0653.jpg',
+                    'IMG_0654.jpg',
+                    'IMG_0656.jpg',
+                    'IMG_0657.jpg',
+                    'IMG_0691.jpg',
+                    'IMG_0862.jpg',
+                    'IMG_1184.jpg',
+                    'IMG_1193.jpg',
+                    'IMG_1194.jpg',
+                    'IMG_1195.jpg',
+                    'IMG_1196.jpg',
+                    'IMG_1271.JPG',
+                    'IMG_1288.jpg',
+                    'IMG_1296.jpg',
+                    'IMG_1356.jpg',
+                    'IMG_1357.jpg',
+                    'IMG_2062.JPG',
+                    'IMG_2170.jpg',
+                    'IMG_2430.JPG',
+                    'IMG_2431.JPG',
+                    'IMG_2432.JPG',
+                    'IMG_2433.JPG',
+                    'IMG_2434.JPG',
+                    'IMG_2456.jpg',
+                    'IMG_2457.jpg',
+                    'IMG_2461.jpg',
+                    'IMG_2667.jpg',
+                    'IMG_2742.jpg',
+                    'IMG_2760.jpg',
+                    'IMG_2765.jpg',
+                    'IMG_2766.jpg',
+                    'IMG_2772.jpg',
+                    'IMG_2779.jpg',
+                    'IMG_2780.jpg',
+                    'IMG_2781.jpg',
+                    'IMG_2782.jpg',
+                    'IMG_2783.jpg',
+                    'IMG_2784.jpg'
+                ],
+
+                // --- 2. CONFIG: SUMMARY IMAGE ---
+                // ใส่ชื่อไฟล์รูปภาพสรุปที่มีอยู่ในโฟลเดอร์ 'pictures'
+                summaryImage: 'summary.jpg', 
+
+                // --- Story Data ---
+                stories: [
+                    { 
+                        type: 'text', 
+                        duration: 10000,
+                        musicFile: '1.mp3',
+                        title: 'ยินดีต้อนรับและสุขสันต์วันปีใหม่!', 
+                        text: 'เกือบครึ่งปีที่พบกันอาจจะไม่นาน แต่เราได้สร้างความทรงจำด้วยกันมานับไม่ถ้วน', 
+                        bgClass: 'bg-gradient-to-b from-blue-900 to-black'
+                    },
+                    { 
+                        type: 'stat', 
+                        duration: 10000,
+                        musicFile: '2.mp3', 
+                        title: 'ปีที่ผ่านมา...', 
+                        text: 'เราฝ่าฟันทั้งการสมัครอนุมาได้ และดูแลโครงการมาด้วยกัน', 
+                        stats: [
+                            { label: 'ถึงเลขเหมือนจะน้อยแต่พลังงานที่ใช้ไปไม่น้อยเลย', val: '3 โครงการ' },
+                            { label: 'อาจจะเยอะกว่านี้ด้วยซ้ำ', val: 'เซลล์สมองที่ใช่ไป 84,000+ เซลล์' }
+                        ],
+                        bgClass: 'bg-gradient-to-b from-purple-900 to-black'
+                    },
+                    { 
+                        type: 'gallery', 
+                        duration: 10000, 
+                        musicFile: '3.mp3', 
+                        title: 'Jingle Sci : The Starlight of Christmas', 
+                        text: 'โครงการแรกที่พวกเราใส่กันยับ เต็มที่ที่สุด!', 
+                        // ใส่ชื่อไฟล์รูปในโฟลเดอร์ pictures
+                        images: [
+                            'IMG_0181.jpg',
+                            'IMG_1194.jpg',
+                            'IMG_1184.jpg',
+                            'IMG_2760.jpg',
+                            'IMG_2766.jpg',
+                            'IMG_2765.jpg',
+                            'IMG_1195.jpg',
+                            'IMG_0520.JPG',
+                            'IMG_2779.jpg'
+
+                        ],
+                        bgClass: 'bg-gradient-to-b from-red-900 to-green-900'
+                    },
+                    { 
+                        type: 'time', 
+                        duration: 8000,
+                        musicFile: '4.mp3', 
+                        title: 'ก็พึ่งจะได้รู้ ว่าเป็นอนุมาตั้ง', 
+                        text: 'ถ้าเอาเวลานี้ไปแลกชั่วโมงกิจกรรมได้ น่าจะเรียนจบตั้งแต่ปี 1 เทอม 2', 
+                        startDate: '2025-09-30', 
+                        bgClass: 'bg-gradient-to-b from-indigo-900 to-black'
+                    },
+                    { 
+                        type: 'meme', 
+                        duration: 10000,
+                        musicFile: '5.mp3', 
+                        title: 'Work Hard, Play Harder', 
+                        text: 'เรื่องงานไม่เกี่ยง เรื่องมีมก็ไม่พัก', 
+                        media: [
+                            // type: 'img' -> ไฟล์ใน pictures
+                            { type: 'img', file: 'IMG_0526.jpg' },
+                            
+                            // type: 'vid' -> ไฟล์ใน video
+                            { type: 'vid', file: 'IMG_2668.mp4' }, 
+                            
+                            { type: 'img', file: 'IMG_0525.jpg' },
+                            { type: 'vid', file: 'IMG_2785.mp4' },
+                        ],
+                        bgClass: 'bg-gradient-to-b from-yellow-900 to-black'
+                    },
+                    { 
+                        type: 'thankyou', 
+                        duration: 14000,
+                        musicFile: '6.mp3', 
+                        title: 'Special Thanks', 
+                        text: 'ขอบคุณโอกาสที่ทำให้เราได้เจอกัน', 
+                        videoFile: 'IMG_0537.mp4', 
+                        names: [
+                            'เต๋อ', 'โฟกัส', 'อุมมี่', 'ดิว', 'ปิ่น',
+                            'เนเน่', 'ฟา', 'อิ๋ม', 'ก้อง', 'เก้า',
+                            'ฝน', 'โอปอล์', 'เฟิส', 'ฟิวส์', 'ปอนด์', 'ตัวอ่อนอนุ'
+                        ],
+                        bgClass: 'bg-gradient-to-b from-pink-900 to-black'
+                    },
+                ],
+
+                currentStoryIndex: 0,
+                storyProgress: 0,
+                storyInterval: null,
+                showContent: false,
+                currentNameIndex: 0,
+                nameInterval: null,
+                showName: true,
+                currentGalleryImage: 0,
+                galleryInterval: null,
+
+                init() {
+                    this.updateTimer();
+                    this.timerInterval = setInterval(() => this.updateTimer(), 1000);
+                    this.currentAudio.loop = true;
+                },
+
+                updateTimer() {
+                    this.now = new Date().getTime();
+                    let distance = this.targetDate - this.now;
+                    if (distance < 0) {
+                        clearInterval(this.timerInterval);
+                        this.timeLeft = { hours: '00', minutes: '00', seconds: '00' };
+                        if (this.view === 'waiting') this.unlockWrapped();
+                        return;
+                    }
+                    let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    this.timeLeft = {
+                        hours: hours < 10 ? "0" + hours : hours,
+                        minutes: minutes < 10 ? "0" + minutes : minutes,
+                        seconds: seconds < 10 ? "0" + seconds : seconds
+                    };
+                },
+
+                unlockWrapped() { this.view = 'transition'; },
+
+                // --- HELPER FUNCTIONS FOR OFFLINE FILES ---
+                // ฟังก์ชันช่วยสร้าง Path อัตโนมัติ
+                getImgPath(filename) {
+                    if (!filename) return '';
+                    if (filename.startsWith('http')) return filename; // รองรับถ้าเผลอใส่ URL
+                    return `pictures/${filename}`;
+                },
+                
+                getSoundPath(filename) {
+                    if (!filename) return '';
+                    return `sounds/${filename}`;
+                },
+
+                getVideoPath(filename) {
+                    if (!filename) return '';
+                    return `videos/${filename}`;
+                },
+
+                getWaitingImage(colIndex, imgIndex) {
+                    if (!this.waitingImages || this.waitingImages.length === 0) {
+                         // Fallback กรณีลืมใส่ไฟล์
+                         return `https://picsum.photos/seed/${colIndex}${imgIndex}/200/300`;
+                    }
+                    const totalIndex = (colIndex * 10) + imgIndex;
+                    const filename = this.waitingImages[totalIndex % this.waitingImages.length];
+                    return this.getImgPath(filename);
+                },
+
+                calcAnuTime(startDateStr) {
+                    const start = new Date(startDateStr);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - start);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const months = Math.floor(diffDays / 30);
+                    const days = diffDays % 30;
+                    return `${months} เดือน ${days} วัน`;
+                },
+
+                startStories() {
+                    this.view = 'stories';
+                    this.playStory(0);
+                },
+
+                playStory(index) {
+                    if (index >= this.stories.length) {
+                        this.currentAudio.pause(); 
+                        this.view = 'summary';
+                        return;
+                    }
+
+                    this.showContent = false;
+                    
+                    if (this.galleryInterval) clearInterval(this.galleryInterval);
+                    if (this.storyInterval) clearInterval(this.storyInterval);
+                    if (this.nameInterval) clearInterval(this.nameInterval);
+
+                    setTimeout(() => {
+                        this.currentStoryIndex = index;
+                        this.storyProgress = 0;
+                        const story = this.stories[index];
+
+                        // Audio Logic (Offline)
+                        if (story.musicFile) {
+                            this.currentAudio.src = this.getSoundPath(story.musicFile);
+                            this.currentAudio.play().catch(e => console.log("Audio play failed (interaction needed first?)", e));
+                        }
+
+                        if (story.type === 'gallery') {
+                            this.currentGalleryImage = 0;
+                            this.galleryInterval = setInterval(() => {
+                                this.currentGalleryImage = (this.currentGalleryImage + 1) % story.images.length;
+                            }, 800);
+                        }
+
+                        if (story.type === 'thankyou') {
+                            this.currentNameIndex = 0;
+                            this.showName = true;
+                            const timePerName = (story.duration - 1000) / story.names.length;
+                            this.nameInterval = setInterval(() => {
+                                this.showName = false;
+                                setTimeout(() => {
+                                    this.currentNameIndex++;
+                                    if (this.currentNameIndex >= story.names.length) this.currentNameIndex = 0;
+                                    this.showName = true;
+                                }, 200);
+                            }, timePerName);
+                        }
+
+                        setTimeout(() => {
+                            this.showContent = true;
+                            const tickRate = 50;
+                            const step = 100 / (story.duration / tickRate);
+                            this.storyInterval = setInterval(() => {
+                                this.storyProgress += step;
+                                if (this.storyProgress >= 100) {
+                                    clearInterval(this.storyInterval);
+                                    this.playStory(this.currentStoryIndex + 1);
+                                }
+                            }, tickRate);
+                        }, 50);
+
+                    }, 600);
+                },
+
+                getBarWidth(index) {
+                    if (index < this.currentStoryIndex) return 100;
+                    if (index > this.currentStoryIndex) return 0;
+                    return this.storyProgress;
+                },
+
+                downloadSummary() {
+                    const card = document.getElementById('summary-card');
+                    html2canvas(card, { scale: 2, backgroundColor: null }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = 'summary.jpg';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    }).catch(err => {
+                        console.error("Download failed:", err);
+                        alert("Cannot save image.");
+                    });
+                }
+            };
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        body { font-family: 'Google Sans', sans-serif; background-color: #000; color: white; overflow: hidden; }
+        @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        @keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+        .scroll-col-up { animation: scrollUp 40s linear infinite; }
+        .scroll-col-down { animation: scrollDown 45s linear infinite; }
+        .atom { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.8); box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); animation: floatParticle 3s ease-in-out infinite; }
+        @keyframes floatParticle { 0%, 100% { transform: translate(0, 0); opacity: 0; } 50% { opacity: 1; } }
+        .name-transition { transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; }
+    </style>
+</head>
+<body x-data="wrappedApp()">
+
+    <!-- 1. WAITING SCREEN -->
+    <div x-show="view === 'waiting'" 
+         x-transition:leave="transition ease-in duration-1000"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden z-10">
+        <div class="absolute inset-0 grid grid-cols-6 gap-2 opacity-20 pointer-events-none z-0">
+            <template x-for="(col, index) in 6">
+                <div :class="index % 2 === 0 ? 'scroll-col-up' : 'scroll-col-down'" class="flex flex-col gap-4">
+                    <template x-for="img in 10">
+                        <div class="bg-white p-2 pb-8 shadow-lg rotate-1">
+                            <div class="w-full h-32 bg-gray-300 overflow-hidden">
+                                <!-- ใช้ getWaitingImage เพื่อดึงไฟล์จาก pictures/ -->
+                                <img :src="getWaitingImage(index, img)" class="w-full h-full object-cover grayscale">
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black z-10"></div>
+        <div class="z-20 text-center space-y-4 p-5">
+            <h1 class="text-4xl md:text-6xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 drop-shadow-md">ANU'SAMO WRAPPED</h1>
+            <p class="text-gray-400 text-sm tracking-wider">UNLOCKS IN</p>
+            <div class="flex gap-4 justify-center text-5xl md:text-7xl font-mono font-bold">
+                <div class="text-center"><span x-text="timeLeft.hours">00</span><p class="text-xs text-gray-500 mt-2">HOURS</p></div>
+                <span>:</span>
+                <div class="text-center"><span x-text="timeLeft.minutes">00</span><p class="text-xs text-gray-500 mt-2">MINUTES</p></div>
+                <span>:</span>
+                <div class="text-center"><span x-text="timeLeft.seconds">00</span><p class="text-xs text-gray-500 mt-2">SECONDS</p></div>
+    </div>
+
+    <!-- 2. TRANSITION -->
+    <div x-show="view === 'transition'" style="display: none;" 
+         x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black z-50 flex items-center justify-center">
+        <div class="relative w-64 h-64 flex items-center justify-center">
+            <template x-for="i in 10">
+                <div class="atom w-2 h-2" :style="`top: ${Math.random()*100}%; left: ${Math.random()*100}%; animation-delay: ${Math.random()*2}s`"></div>
+            </template>
+            <button @click="startStories()" class="relative z-10 bg-white text-black px-8 py-3 rounded-full font-bold text-xl hover:scale-110 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.5)]">START</button>
+        </div>
+    </div>
+
+    <!-- 3. STORIES -->
+    <div x-show="view === 'stories'" style="display: none;" 
+         x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         class="fixed inset-0 bg-black z-40 flex items-center justify-center">
+        <div class="w-full md:max-w-md h-full relative shadow-2xl overflow-hidden flex flex-col transition-colors duration-1000 ease-in-out" :class="stories[currentStoryIndex]?.bgClass || 'bg-gray-900'">
+            
+            <div class="absolute top-4 left-0 w-full px-2 flex gap-1 z-50">
+                <template x-for="(story, index) in stories">
+                    <div class="h-1 flex-1 bg-white/20 rounded-full overflow-hidden">
+                        <div class="h-full bg-white transition-all duration-100 ease-linear" :style="`width: ${getBarWidth(index)}%`"></div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="relative w-full h-full flex flex-col items-center justify-center p-6 text-center z-10">
+                <div class="w-full h-full flex flex-col items-center justify-center">
+                    
+                    <!-- Text Type -->
+                    <template x-if="stories[currentStoryIndex].type === 'text'">
+                        <div class="space-y-6">
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 transform" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                                <h2 class="text-3xl font-bold" x-text="stories[currentStoryIndex].title"></h2>
+                            </div>
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-300 transform" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+                                <p class="text-xl leading-relaxed" x-text="stories[currentStoryIndex].text"></p>
+                                <div class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-500" x-text="stories[currentStoryIndex].highlight"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Stat Type -->
+                    <template x-if="stories[currentStoryIndex].type === 'stat'">
+                        <div class="w-full">
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 transform" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                                <h2 class="text-2xl font-bold mb-8" x-text="stories[currentStoryIndex].title"></h2>
+                                <p class="text-lg mb-8" x-text="stories[currentStoryIndex].text"></p>
+                            </div>
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-300 transform" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-8">
+                                <template x-for="stat in stories[currentStoryIndex].stats">
+                                    <div class="bg-white/10 p-6 rounded-2xl backdrop-blur-sm border border-white/10">
+                                        <div class="text-4xl font-black text-green-300 mb-2" x-text="stat.val"></div>
+                                        <div class="text-sm uppercase tracking-widest opacity-80" x-text="stat.label"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Gallery Type -->
+                    <template x-if="stories[currentStoryIndex].type === 'gallery'">
+                        <div class="relative w-full h-3/4 flex flex-col items-center justify-center">
+                             <div x-show="showContent" x-transition:enter="transition ease-out duration-1000 transform" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="absolute inset-0 flex items-center justify-center">
+                                <img :src="getImgPath(stories[currentStoryIndex].images[currentGalleryImage])" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl border-4 border-white rotate-1 transition-all duration-300">
+                            </div>
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-500 transform" x-transition:enter-start="opacity-0 translate-y-10" x-transition:enter-end="opacity-100 translate-y-0" class="absolute bottom-10 bg-black/50 backdrop-blur px-4 py-2 rounded-full z-10">
+                                <h2 x-text="stories[currentStoryIndex].title" class="font-bold text-xl"></h2>
+                                <p x-text="stories[currentStoryIndex].text" class="text-sm text-gray-200 mt-1"></p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Time Type -->
+                    <template x-if="stories[currentStoryIndex].type === 'time'">
+                        <div class="space-y-6">
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                                <h2 class="text-2xl opacity-80" x-text="stories[currentStoryIndex].title"></h2>
+                            </div>
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-300 transform" x-transition:enter-start="opacity-0 scale-50" x-transition:enter-end="opacity-100 scale-100">
+                                <div class="text-4xl font-black bg-white/10 p-4 rounded-xl inline-block" x-text="calcAnuTime(stories[currentStoryIndex].startDate)"></div>
+                            </div>
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-700" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                                <p class="text-lg italic text-yellow-200" x-text="stories[currentStoryIndex].text"></p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Meme Type -->
+                    <template x-if="stories[currentStoryIndex].type === 'meme'">
+                        <div class="w-full h-full flex flex-col justify-center">
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                                <h2 class="text-2xl font-bold mb-4" x-text="stories[currentStoryIndex].title"></h2>
+                            </div>
+                            <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-300" x-transition:enter-start="opacity-0 translate-y-10" x-transition:enter-end="opacity-100 translate-y-0">
+                                <div class="grid grid-cols-2 gap-2 w-full">
+                                    <template x-for="media in stories[currentStoryIndex].media">
+                                        <div class="aspect-square bg-gray-800 rounded-lg overflow-hidden border border-white/20 relative">
+                                            <!-- Image Case -->
+                                            <template x-if="media.type === 'img'">
+                                                <img :src="getImgPath(media.file)" class="w-full h-full object-cover">
+                                            </template>
+                                            
+                                            <!-- Video Case -->
+                                            <template x-if="media.type === 'vid'">
+                                                <video autoplay loop muted playsinline class="w-full h-full object-cover">
+                                                    <source :src="getVideoPath(media.file)" type="video/mp4">
+                                                </video>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                                <p class="mt-4 text-sm opacity-70" x-text="stories[currentStoryIndex].text"></p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Thank You -->
+                    <template x-if="stories[currentStoryIndex].type === 'thankyou'">
+                        <div class="w-full h-full flex flex-col justify-center items-center relative overflow-hidden">
+                            <!-- Background Video -->
+                            <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover opacity-30">
+                                <source :src="getVideoPath(stories[currentStoryIndex].videoFile)" type="video/mp4">
+                            </video>
+                            
+                            <div class="relative z-10 w-full p-4 overflow-hidden h-3/4 flex flex-col items-center justify-center">
+                                <div x-show="showContent" x-transition:enter="transition ease-out duration-700" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                                    <h2 class="text-3xl font-bold mb-2 text-yellow-300" x-text="stories[currentStoryIndex].title"></h2>
+                                    <p class="text-white/80 mb-10" x-text="stories[currentStoryIndex].text"></p>
+                                </div>
+                                <div x-show="showContent" x-transition:enter="transition ease-out duration-700 delay-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="h-32 flex items-center justify-center">
+                                    <div class="text-4xl md:text-5xl font-black text-white name-transition transform"
+                                         :class="showName ? 'opacity-100 scale-100' : 'opacity-0 scale-90'">
+                                        <span class="text-pink-400 mr-2">❤</span>
+                                        <span x-text="stories[currentStoryIndex].names[currentNameIndex]"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+            </div>
+            
+            <div class="absolute bottom-6 w-full text-center text-xs opacity-50 uppercase tracking-widest z-10">ANU'SAMO WRAPPED</div>
+        </div>
+    </div>
+
+    <!-- 4. SUMMARY -->
+    <div x-show="view === 'summary'" style="display: none;" 
+         x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+         class="fixed inset-0 bg-zinc-900 z-50 flex items-center justify-center p-4">
+        <div class="flex flex-col items-center gap-6 w-full max-w-md">
+            <div id="summary-card" class="w-full relative shadow-2xl rounded-xl overflow-hidden">
+                <template x-if="!summaryImage">
+                    <div class="aspect-[4/5] bg-gray-800 flex items-center justify-center text-gray-500 text-center p-4">
+                        <p>No Summary Image Provided</p>
+                    </div>
+                </template>
+                <template x-if="summaryImage">
+                     <img :src="getImgPath(summaryImage)" class="w-full h-auto object-contain bg-black" alt="My 2025 Summary">
+                </template>
+            </div>
+            <div class="flex gap-4 w-full">
+                <button @click="downloadSummary()" class="flex-1 bg-white text-black py-3 rounded-full font-bold shadow-lg hover:bg-gray-200 transition">Save Image</button>
+                <button @click="location.reload()" class="px-4 py-3 bg-gray-800 text-white rounded-full font-bold hover:bg-gray-700">Replay</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
